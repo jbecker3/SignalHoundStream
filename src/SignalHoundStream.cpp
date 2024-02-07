@@ -5,12 +5,18 @@
 #include "SignalHoundStream.h"
 
 #include <cassert>
-
+#include <iostream>
+#include <fstream>
+#include <string>
 
 SignalHoundStream::SignalHoundStream(){
     device = -1;
+    status = smNoError;
     setupDeviceUSB();
+    words.resize(1000);
 }
+
+SignalHoundStream::~SignalHoundStream()= default;
 
 void SignalHoundStream::setupDeviceUSB() {
     status = smOpenDevice(&device);
@@ -48,8 +54,9 @@ void SignalHoundStream::getVRTPackets(int dataPacketCount,IQ_Parameters paramete
     assert(status == smNoError);
 
     uint32_t wordCount = contextWordCount + dataWordCount * dataPacketCount;
-    uint32_t *words = new uint32_t[wordCount];
-    uint32_t *curr = words;
+    words.clear();
+    words.resize(wordCount);
+    uint32_t *curr = words.data();
 
     // Get context packet
     uint32_t actualContextWordCount;
@@ -65,6 +72,17 @@ void SignalHoundStream::getVRTPackets(int dataPacketCount,IQ_Parameters paramete
     assert(actualDataWordCount == dataWordCount * dataPacketCount);
 
     smCloseDevice(device);
+}
 
-    if(words) delete[] words;
+void SignalHoundStream::writeStream(const std::string &filename)
+{
+    if(!words.empty()) {
+        std::ofstream out_file(filename, std::ios::out | std::ios::binary);
+        if (out_file.is_open()) {
+            out_file.write((char*)words.data(), words.size() * sizeof(uint32_t));
+            out_file.close();
+        } else {
+            std::cerr << "Unable to open file: " << filename << std::endl;
+        }
+    }
 }
