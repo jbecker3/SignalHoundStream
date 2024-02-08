@@ -23,7 +23,7 @@ void SignalHoundStream::setupDeviceUSB() {
 }
 
 void SignalHoundStream::setupDeviceNetwork() {
-    status = smOpenDevice(&device);
+    status = smOpenNetworkedDevice(&device, SM_ADDR_ANY, SM_DEFAULT_ADDR, SM_DEFAULT_PORT);
 }
 
 void SignalHoundStream::getVRTPackets(int dataPacketCount,IQ_Parameters parameters) {
