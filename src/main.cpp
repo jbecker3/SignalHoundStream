@@ -9,8 +9,6 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-#define CHECK_JSON(a,b) a.contains(b)
-
 int main(int argc, char* argv[])
 {
     // Check if the correct number of arguments is provided
