@@ -4,6 +4,16 @@ project(SignalHoundStream)
 # Set C++ version
 set(CMAKE_CXX_STANDARD 17)
 
+include(FetchContent)
+
+# Download and include nlohmann/json
+FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.2  # You can replace this with the desired version or 'master' to always use the latest version
+)
+FetchContent_MakeAvailable(json)
+
 # Add your source files here
 set(SOURCE_FILES
 src/main.cpp
@@ -24,6 +34,8 @@ endif()
 
 # Add executable target
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json )
 
 # Copy DLL and LIB to build directory before the main target is built
 add_custom_command(

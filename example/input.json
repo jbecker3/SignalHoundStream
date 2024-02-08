@@ -1,0 +1,15 @@
+{
+  "stream": [
+    {
+      "connection_type": "test",
+      "center_freq": 3.0e9,
+      "sample_rate": 2,
+      "iq_bandwidth": 20e6,
+      "ref_level": -20,
+      "stream_id": 1,
+      "packet_size": 16384,
+      "packet_count": 10000,
+      "output_file": "test.bin"
+    }
+  ]
+}

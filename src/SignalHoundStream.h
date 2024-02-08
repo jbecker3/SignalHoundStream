@@ -14,12 +14,12 @@
 #pragma comment(lib, "sm_api")
 
 struct IQ_Parameters{
-    double centerFreq;
-    int sampleRate;
-    double iqBandwidth;
-    double refLevel;
-    int streamID;
-    int packetSize;
+    double center_freq;
+    int sample_rate;
+    double iq_bandwidth;
+    double ref_level;
+    int stream_id;
+    int packet_size;
 };
 
 class SignalHoundStream {
@@ -33,7 +33,7 @@ public:
     ~SignalHoundStream();
     void setupDeviceUSB();
     void setupDeviceNetwork();
-    void getVRTPackets(int dataPacketCount, IQ_Parameters parameters);
+    void getVRTPackets(int packet_count, IQ_Parameters parameters);
     void writeStream(const std::string& filename);
 };
 

@@ -26,50 +26,50 @@ void SignalHoundStream::setupDeviceNetwork() {
     status = smOpenNetworkedDevice(&device, SM_ADDR_ANY, SM_DEFAULT_ADDR, SM_DEFAULT_PORT);
 }
 
-void SignalHoundStream::getVRTPackets(int dataPacketCount,IQ_Parameters parameters) {
+void SignalHoundStream::getVRTPackets(int packet_count,IQ_Parameters parameters) {
     assert(status == smNoError);
 
     // Set IQ parameters
-    smSetIQCenterFreq(device, parameters.centerFreq);
-    smSetIQSampleRate(device, parameters.sampleRate);
-    smSetIQBandwidth(device, smTrue, parameters.iqBandwidth);
-    smSetRefLevel(device, parameters.refLevel);
+    smSetIQCenterFreq(device, parameters.center_freq);
+    smSetIQSampleRate(device, parameters.sample_rate);
+    smSetIQBandwidth(device, smTrue, parameters.iq_bandwidth);
+    smSetRefLevel(device, parameters.ref_level);
 
     // Set VRt parameters
-    smSetVrtStreamID(device, parameters.streamID);
-    smSetVrtPacketSize(device, parameters.packetSize);
+    smSetVrtStreamID(device, parameters.stream_id);
+    smSetVrtPacketSize(device, parameters.packet_size);
 
     // Configure
     status = smConfigure(device, smModeIQStreaming); // VRT mode
     assert(status == smNoError);
 
     // Allocate memory
-    uint32_t contextWordCount;
-    status = smGetVrtContextPktSize(device, &contextWordCount);
+    uint32_t context_word_count;
+    status = smGetVrtContextPktSize(device, &context_word_count);
     assert(status == smNoError);
 
-    uint16_t samplesPerPkt;
-    uint32_t dataWordCount;
-    status = smGetVrtPacketSize(device, &samplesPerPkt, &dataWordCount);
+    uint16_t samples_per_packet;
+    uint32_t data_word_count;
+    status = smGetVrtPacketSize(device, &samples_per_packet, &data_word_count);
     assert(status == smNoError);
 
-    uint32_t wordCount = contextWordCount + dataWordCount * dataPacketCount;
+    uint32_t word_count = context_word_count + data_word_count * packet_count;
     words.clear();
-    words.resize(wordCount);
+    words.resize(word_count);
     uint32_t *curr = words.data();
 
     // Get context packet
-    uint32_t actualContextWordCount;
-    status = smGetVrtContextPkt(device, curr, &actualContextWordCount);
+    uint32_t actual_context_word_count;
+    status = smGetVrtContextPkt(device, curr, &actual_context_word_count);
     assert(status == smNoError);
-    assert(actualContextWordCount == contextWordCount);
-    curr += contextWordCount;
+    assert(actual_context_word_count == context_word_count);
+    curr += context_word_count;
 
     // Get data packets
-    uint32_t actualDataWordCount;
-    status = smGetVrtPackets(device, curr, &actualDataWordCount, dataPacketCount, smFalse);
+    uint32_t actual_data_word_count;
+    status = smGetVrtPackets(device, curr, &actual_data_word_count, packet_count, smFalse);
     assert(status == smNoError);
-    assert(actualDataWordCount == dataWordCount * dataPacketCount);
+    assert(actual_data_word_count == data_word_count * packet_count);
 
     smCloseDevice(device);
 }
