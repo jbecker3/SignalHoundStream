@@ -7,7 +7,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <nlohmann/json.hpp>
+#include <omp.h>
 
 int main(int argc, char* argv[])
 {
@@ -19,7 +21,6 @@ int main(int argc, char* argv[])
 
     std::string input_filename = argv[1];
     std::ifstream input_file(input_filename);
-    SignalHoundStream stream;
     nlohmann::json json_input;
 
     if(!input_file.is_open())
@@ -34,8 +35,16 @@ int main(int argc, char* argv[])
     if(json_input.contains("stream"))
     {
         auto& streams_data = json_input["stream"];
+
+        std::vector<SignalHoundStream> streams;
+        std::vector<IQ_Parameters> stream_parameters;
+        std::vector<int> packet_counts;
+        std::vector<std::string> output_filenames;
+
+        //Setup streams
         for(const auto& stream_data : streams_data)
         {
+            SignalHoundStream stream;
             std::string connection_type = stream_data["connection_type"];
             if (connection_type == "usb") {
                 stream.setupDeviceUSB();
@@ -49,17 +58,16 @@ int main(int argc, char* argv[])
             }
 
             IQ_Parameters parameters{};
-            int packet_count = 0;
+            int packet_count;
             std::string output_filename;
-            if(stream_data.contains("center_freq") &&
-               stream_data.contains("sample_rate") &&
-               stream_data.contains("iq_bandwidth") &&
-               stream_data.contains("ref_level") &&
-               stream_data.contains("stream_id") &&
-               stream_data.contains("packet_size") &&
-               stream_data.contains("packet_count") &&
-               stream_data.contains("output_file"))
-            {
+            if (stream_data.contains("center_freq") &&
+                stream_data.contains("sample_rate") &&
+                stream_data.contains("iq_bandwidth") &&
+                stream_data.contains("ref_level") &&
+                stream_data.contains("stream_id") &&
+                stream_data.contains("packet_size") &&
+                stream_data.contains("packet_count") &&
+                stream_data.contains("output_file")) {
                 parameters.center_freq = stream_data["center_freq"];
                 parameters.sample_rate = stream_data["sample_rate"];
                 parameters.iq_bandwidth = stream_data["iq_bandwidth"];
@@ -68,16 +76,14 @@ int main(int argc, char* argv[])
                 parameters.packet_size = stream_data["packet_size"];
                 packet_count = stream_data["packet_count"];
                 output_filename = stream_data["output_file"];
-            }
-            else
-            {
+            } else {
                 std::cerr << "Input file does not contain all necessary fields." << std::endl;
                 return 1;
             }
 
             double sample_rate;
-            if (connection_type == "net") sample_rate = 50.0 /float(parameters.sample_rate);
-            else sample_rate = 200.0 /float(parameters.sample_rate);
+            if (connection_type == "net") sample_rate = 50.0 / float(parameters.sample_rate);
+            else sample_rate = 200.0 / float(parameters.sample_rate);
 
             std::cout << "Recording IQ Stream with these Parameters:" << std::endl;
             std::cout << "\tCenter Frequency: " << parameters.center_freq / 1.0e6 << "MHz" << std::endl;
@@ -89,8 +95,20 @@ int main(int argc, char* argv[])
             std::cout << "\tPacket Count: " << packet_count << " packets" << std::endl;
             std::cout << "\tOutput File: " << output_filename << std::endl;
 
-            if (connection_type != "test") stream.getVRTPackets(packet_count,parameters);
-            stream.writeStream(output_filename);
+            streams.push_back(stream);
+            stream_parameters.push_back(parameters);
+            packet_counts.push_back(packet_count);
+            output_filenames.push_back(output_filename);
+        }
+
+        //Collect Packets and write to file
+        #pragma omp parallel for
+        for(int i = 0; i < streams.size(); i++)
+        {
+            if (streams_data[i]["connection_type"] != "test") {
+                streams[i].getVRTPackets(packet_counts[i], stream_parameters[i]);
+            }
+            streams[i].writeStream(output_filenames[i]);
         }
     }
     else

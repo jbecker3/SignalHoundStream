@@ -4,6 +4,8 @@ project(SignalHoundStream)
 # Set C++ version
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(OpenMP REQUIRED)
+
 include(FetchContent)
 
 # Download and include nlohmann/json
@@ -35,7 +37,8 @@ endif()
 # Add executable target
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json )
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 
 # Copy DLL and LIB to build directory before the main target is built
 add_custom_command(
