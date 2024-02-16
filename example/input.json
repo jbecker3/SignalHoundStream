@@ -2,6 +2,7 @@
   "stream": [
     {
       "connection_type": "test",
+      "serial": 1234,
       "center_freq": 3.0e9,
       "sample_rate": 2,
       "iq_bandwidth": 20e6,
@@ -13,6 +14,7 @@
     },
     {
       "connection_type": "test",
+      "serial": 1234,
       "center_freq": 3.0e9,
       "sample_rate": 2,
       "iq_bandwidth": 20e6,

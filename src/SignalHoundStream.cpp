@@ -12,14 +12,24 @@
 SignalHoundStream::SignalHoundStream(){
     device = -1;
     status = smNoError;
-    setupDeviceUSB();
     words.resize(1000);
 }
 
 SignalHoundStream::~SignalHoundStream()= default;
 
-void SignalHoundStream::setupDeviceUSB() {
-    status = smOpenDevice(&device);
+void SignalHoundStream::printUSBDevices()
+{
+    int serials[9];
+    int deviceCount;
+    smGetDeviceList(serials, &deviceCount);
+    for (int i = 0; i < deviceCount; i++)
+    {
+        std::cout << "Device " << i << ": " << serials[i] << std::endl;
+    }
+}
+
+void SignalHoundStream::setupDeviceUSB(int serial) {
+    status = smOpenDeviceBySerial(&device,serial);
 }
 
 void SignalHoundStream::setupDeviceNetwork() {

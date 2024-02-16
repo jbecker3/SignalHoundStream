@@ -31,7 +31,8 @@ private:
 public:
     SignalHoundStream();
     ~SignalHoundStream();
-    void setupDeviceUSB();
+    void printUSBDevices();
+    void setupDeviceUSB(int serial);
     void setupDeviceNetwork();
     void getVRTPackets(int packet_count, IQ_Parameters parameters);
     void writeStream(const std::string& filename);

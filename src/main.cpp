@@ -4,6 +4,8 @@
 
 #include "SignalHoundStream.h"
 
+#include <chrono>
+#include <thread>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -46,21 +48,13 @@ int main(int argc, char* argv[])
         {
             SignalHoundStream stream;
             std::string connection_type = stream_data["connection_type"];
-            if (connection_type == "usb") {
-                stream.setupDeviceUSB();
-            } else if (connection_type == "net") {
-                stream.setupDeviceNetwork();
-            } else if (connection_type == "test") {
-                //do nothing
-            } else {
-                std::cerr << "Invalid connection type. Defaulting to usb.\n";
-                stream.setupDeviceUSB();
-            }
 
             IQ_Parameters parameters{};
             int packet_count;
+            int serial;
             std::string output_filename;
-            if (stream_data.contains("center_freq") &&
+            if (stream_data.contains("serial") && 
+                stream_data.contains("center_freq") &&
                 stream_data.contains("sample_rate") &&
                 stream_data.contains("iq_bandwidth") &&
                 stream_data.contains("ref_level") &&
@@ -68,6 +62,7 @@ int main(int argc, char* argv[])
                 stream_data.contains("packet_size") &&
                 stream_data.contains("packet_count") &&
                 stream_data.contains("output_file")) {
+                serial = stream_data["serial"];
                 parameters.center_freq = stream_data["center_freq"];
                 parameters.sample_rate = stream_data["sample_rate"];
                 parameters.iq_bandwidth = stream_data["iq_bandwidth"];
@@ -81,11 +76,26 @@ int main(int argc, char* argv[])
                 return 1;
             }
 
+            if (connection_type == "usb") {
+                stream.setupDeviceUSB(serial);
+            }
+            else if (connection_type == "net") {
+                stream.setupDeviceNetwork();
+            }
+            else if (connection_type == "test") {
+                //do nothing
+            }
+            else {
+                std::cerr << "Invalid connection type. Defaulting to usb.\n";
+                stream.setupDeviceUSB(serial);
+            }
+
             double sample_rate;
             if (connection_type == "net") sample_rate = 50.0 / float(parameters.sample_rate);
             else sample_rate = 200.0 / float(parameters.sample_rate);
 
             std::cout << "Recording IQ Stream with these Parameters:" << std::endl;
+            std::cout << "\tSerial: " << serial << std::endl;
             std::cout << "\tCenter Frequency: " << parameters.center_freq / 1.0e6 << "MHz" << std::endl;
             std::cout << "\tSample Rate: " << sample_rate << "MS/s" << std::endl;
             std::cout << "\tIQ Bandwidth: " << parameters.iq_bandwidth / 1.0e6 << "MHz" << std::endl;
@@ -105,10 +115,16 @@ int main(int argc, char* argv[])
         #pragma omp parallel for
         for(int i = 0; i < streams.size(); i++)
         {
+            std::cout << "Started Streaming device " << i << std::endl;
             if (streams_data[i]["connection_type"] != "test") {
                 streams[i].getVRTPackets(packet_counts[i], stream_parameters[i]);
             }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+            }
             streams[i].writeStream(output_filenames[i]);
+            std::cout << "Finished Streaming device " << i << std::endl;
         }
     }
     else
